@@ -1,0 +1,29 @@
+{
+  "name": "weibo-follow-flow",
+  "version": "0.1.0",
+  "description": "Tampermonkey / Violentmonkey userscript for Weibo timeline Follow and Unfollow with native UI and 2-step confirmation",
+  "type": "module",
+  "scripts": {
+    "test": "node test/userscript.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haorui-lab/weibo-follow-flow.git"
+  },
+  "keywords": [
+    "userscript",
+    "tampermonkey",
+    "violentmonkey",
+    "weibo",
+    "timeline",
+    "follow",
+    "unfollow",
+    "feed"
+  ],
+  "author": "haorui",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/haorui-lab/weibo-follow-flow/issues"
+  },
+  "homepage": "https://github.com/haorui-lab/weibo-follow-flow#readme"
+}
