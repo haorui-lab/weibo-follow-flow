@@ -80,6 +80,29 @@ export function extractUidFromProfileUrl(urlOrHref) {
 }
 
 /**
+ * Filter determining whether network responses should be extracted
+ */
+export function shouldExtractFromUrl(url) {
+  if (!url) return false;
+  const s = String(url);
+  if (s.includes('/ajax/friendships/create') || s.includes('/ajax/friendships/destory')) {
+    return false;
+  }
+  return s.includes('/ajax/') || s.includes('/statuses/') || s.includes('/feed/');
+}
+
+/**
+ * Checks whether an API response indicates true business success
+ */
+export function isApiSuccess(data) {
+  if (!data || typeof data !== 'object') return false;
+  if (data.ok === 0 || data.error || data.error_code || data.errno) {
+    return false;
+  }
+  return data.ok === 1 || data.ok === true || Boolean(data.id) || Boolean(data.user);
+}
+
+/**
  * Extracts user relationship data recursively from Weibo AJAX responses
  */
 export function extractUsersFromWeiboData(data, results = new Map()) {
@@ -179,6 +202,7 @@ export class FollowStateManager {
   constructor() {
     this.cache = new Map();
     this.nameToUid = new Map();
+    this.userActionLocks = new Map();
     this.listeners = new Set();
   }
 
@@ -195,15 +219,31 @@ export class FollowStateManager {
     return null;
   }
 
-  set(uid, state) {
+  set(uid, state, isUserAction = false) {
     if (!uid) return;
     const strUid = String(uid);
+    const now = Date.now();
+
+    if (!isUserAction) {
+      const lastAction = this.userActionLocks.get(strUid);
+      if (lastAction && (now - lastAction < 15000)) {
+        if (state.following !== undefined) {
+          const current = this.cache.get(strUid);
+          if (current && current.following !== undefined && current.following !== state.following) {
+            return current;
+          }
+        }
+      }
+    } else {
+      this.userActionLocks.set(strUid, now);
+    }
+
     const prev = this.cache.get(strUid) || {};
     const updated = {
       ...prev,
       ...state,
       uid: strUid,
-      updatedAt: Date.now()
+      updatedAt: now
     };
     this.cache.set(strUid, updated);
 
@@ -514,3 +554,57 @@ test('ButtonStateMachine handles optional 2-step unfollow when configured', asyn
 
   machine.destroy();
 });
+
+test('FollowStateManager locks state against stale passive network/scan overwrites after user action', () => {
+  const manager = new FollowStateManager();
+
+  // User explicitly follows author 1642634100
+  manager.set('1642634100', { following: true }, true);
+  assert.equal(manager.get('1642634100').following, true);
+
+  // Stale network response arrives with following: false (passive update)
+  const staleNetworkData = {
+    id: 1642634100,
+    following: false
+  };
+  manager.set('1642634100', { following: staleNetworkData.following }, false);
+
+  // State must remain protected as true!
+  assert.equal(manager.get('1642634100').following, true);
+
+  // User explicitly unfollows author 1642634100
+  manager.set('1642634100', { following: false }, true);
+  assert.equal(manager.get('1642634100').following, false);
+
+  // Stale network response arrives with following: true (passive update)
+  manager.set('1642634100', { following: true }, false);
+
+  // State must remain protected as false!
+  assert.equal(manager.get('1642634100').following, false);
+});
+
+test('shouldExtractFromUrl ignores follow/unfollow mutation endpoints to prevent cache pollution', () => {
+  assert.equal(shouldExtractFromUrl('https://weibo.com/ajax/friendships/create'), false);
+  assert.equal(shouldExtractFromUrl('https://weibo.com/ajax/friendships/destory'), false);
+  assert.equal(shouldExtractFromUrl('https://weibo.com/ajax/feed/unreadstream'), true);
+  assert.equal(shouldExtractFromUrl('https://weibo.com/ajax/statuses/buildComments'), true);
+  assert.equal(shouldExtractFromUrl('https://weibo.com/other/api'), false);
+  assert.equal(shouldExtractFromUrl(''), false);
+  assert.equal(shouldExtractFromUrl(null), false);
+});
+
+test('isApiSuccess strictly detects business failures and successes', () => {
+  // Business failures
+  assert.equal(isApiSuccess({ ok: 0, error: 'fail' }), false);
+  assert.equal(isApiSuccess({ ok: 0, errno: '10001' }), false);
+  assert.equal(isApiSuccess({ error_code: 20003 }), false);
+  assert.equal(isApiSuccess(null), false);
+  assert.equal(isApiSuccess('error'), false);
+
+  // Business successes
+  assert.equal(isApiSuccess({ ok: 1 }), true);
+  assert.equal(isApiSuccess({ ok: true }), true);
+  assert.equal(isApiSuccess({ id: 12345 }), true);
+  assert.equal(isApiSuccess({ user: { id: 12345 } }), true);
+});
+

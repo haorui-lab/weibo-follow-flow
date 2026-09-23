@@ -1,6 +1,6 @@
 {
   "name": "weibo-follow-flow",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "description": "Tampermonkey / Violentmonkey userscript for Weibo timeline Follow and Unfollow with native UI and 2-step confirmation",
   "type": "module",
   "scripts": {

@@ -2,7 +2,7 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.7.1
+// @version      0.7.2
 // @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 1-click action (optional 2-step) and instant state sync.
 // @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持单次点击直接取关与全流同步。
 // @author       haorui
@@ -155,6 +155,8 @@
       this.cache = new Map();
       // Map<screen_name_lower, uid>
       this.nameToUid = new Map();
+      // Map<uid, timestamp> 用户主动交互的时间戳锁，防异步陈旧数据覆写
+      this.userActionLocks = new Map();
       this.listeners = new Set();
     }
 
@@ -171,15 +173,33 @@
       return null;
     }
 
-    set(uid, state) {
+    set(uid, state, isUserAction = false) {
       if (!uid) return;
       const strUid = String(uid);
+      const now = Date.now();
+
+      // 若为网络被动劫持或轮询扫描更新，但该博主在 15 秒内有用户主动操作记录：
+      // 坚决不接受被动陈旧的 conflicting 关注状态，保护用户的主动操作
+      if (!isUserAction) {
+        const lastAction = this.userActionLocks.get(strUid);
+        if (lastAction && (now - lastAction < 15000)) {
+          if (state.following !== undefined) {
+            const current = this.cache.get(strUid);
+            if (current && current.following !== undefined && current.following !== state.following) {
+              return current;
+            }
+          }
+        }
+      } else {
+        this.userActionLocks.set(strUid, now);
+      }
+
       const prev = this.cache.get(strUid) || {};
       const updated = {
         ...prev,
         ...state,
         uid: strUid,
-        updatedAt: Date.now()
+        updatedAt: now
       };
       this.cache.set(strUid, updated);
 
@@ -267,7 +287,11 @@
         const response = await originalFetch.apply(this, args);
         try {
           const url = String(args[0]?.url || args[0] || '');
-          if (url.includes('/ajax/') || url.includes('/statuses/') || url.includes('/feed/') || url.includes('/friendships/')) {
+          // 排除关注/取关 API 的直接响应，避免其陈旧用户快照污染 stateManager，锁定由 executeFollowToggle 统一权威管理
+          if (url.includes('/ajax/friendships/create') || url.includes('/ajax/friendships/destory')) {
+            return response;
+          }
+          if (url.includes('/ajax/') || url.includes('/statuses/') || url.includes('/feed/')) {
             const clone = response.clone();
             clone.json().then(data => {
               if (data) extractUsersFromWeiboData(data);
@@ -290,9 +314,14 @@
       win.XMLHttpRequest.prototype.send = function (...args) {
         this.addEventListener('load', function () {
           try {
-            if (this._weibo_url && (this._weibo_url.includes('/ajax/') || this._weibo_url.includes('/statuses/') || this._weibo_url.includes('/feed/') || this._weibo_url.includes('/friendships/'))) {
-              const data = JSON.parse(this.responseText);
-              if (data) extractUsersFromWeiboData(data);
+            if (this._weibo_url) {
+              if (this._weibo_url.includes('/ajax/friendships/create') || this._weibo_url.includes('/ajax/friendships/destory')) {
+                return;
+              }
+              if (this._weibo_url.includes('/ajax/') || this._weibo_url.includes('/statuses/') || this._weibo_url.includes('/feed/')) {
+                const data = JSON.parse(this.responseText);
+                if (data) extractUsersFromWeiboData(data);
+              }
             }
           } catch (e) {}
         });
@@ -437,10 +466,15 @@
 
       if (!response.ok) return false;
       const data = await response.json().catch(() => null);
-      if (data && (data.ok === 1 || data.ok === true || data.id || data.user)) {
-        return true;
+      if (data) {
+        if (data.ok === 0 || data.error || data.error_code || data.errno) {
+          return false;
+        }
+        if (data.ok === 1 || data.ok === true || data.id || data.user) {
+          return true;
+        }
       }
-      return response.ok;
+      return false;
     } catch (e) {
       return false;
     }
@@ -467,10 +501,15 @@
 
       if (!response.ok) return false;
       const data = await response.json().catch(() => null);
-      if (data && (data.ok === 1 || data.ok === true)) {
-        return true;
+      if (data) {
+        if (data.ok === 0 || data.error || data.error_code || data.errno) {
+          return false;
+        }
+        if (data.ok === 1 || data.ok === true) {
+          return true;
+        }
       }
-      return response.ok;
+      return false;
     } catch (e) {
       return false;
     }
@@ -495,7 +534,8 @@
     }
 
     if (success) {
-      stateManager.set(uid, { following: isFollow });
+      // 记录用户主动交互（isUserAction = true），开启时间戳保护锁，防止被异步陈旧网络响应翻转
+      stateManager.set(uid, { following: isFollow }, true);
       showToast(isFollow ? '关注成功' : '已取消关注');
       return true;
     }
@@ -853,24 +893,18 @@
 
     const unsubscribe = stateManager.subscribe((changedUid, state) => {
       if (changedUid !== uid) return;
-      if (currentState === 'LOADING') return;
 
       if (confirmTimer) {
         clearTimeout(confirmTimer);
         confirmTimer = null;
       }
 
-      if (state.following) {
-        currentState = 'FOLLOWING';
-      } else {
-        currentState = 'NOT_FOLLOWING';
-      }
+      currentState = state.following ? 'FOLLOWING' : 'NOT_FOLLOWING';
       renderUI();
     });
 
     container._unsubscribe = unsubscribe;
     container._updateState = (following) => {
-      if (currentState === 'LOADING') return;
       currentState = following ? 'FOLLOWING' : 'NOT_FOLLOWING';
       renderUI();
     };
@@ -889,9 +923,11 @@
     }
 
     // Hide native +关注 button in header if present to avoid dual buttons
-    const nativeBtn = header.querySelector('button[class*="woo-button"], [class*="_followbtn"]');
+    const nativeBtn = header.querySelector('button[class*="woo-button"][class*="primary"], [class*="_followbtn"], div[action-type="follow"]');
     if (nativeBtn && nativeBtn !== buttonContainer) {
-      nativeBtn.style.display = 'none';
+      if (!nativeBtn.textContent || nativeBtn.textContent.includes('关注')) {
+        nativeBtn.style.display = 'none';
+      }
     }
 
     // Look for more dropdown wrap inside header
@@ -959,6 +995,11 @@
     const existingContainer = cardElement.querySelector('.weibo-followflow-container');
     if (existingContainer) {
       if (existingContainer.getAttribute('data-wb-author-uid') === author.uid) {
+        // 同步缓存中最新的关注状态至已有容器，防卡片状态脱节
+        const cached = stateManager.get(author.uid);
+        if (cached && cached.following !== undefined && existingContainer._updateState) {
+          existingContainer._updateState(cached.following);
+        }
         return;
       }
       if (existingContainer._unsubscribe) existingContainer._unsubscribe();
@@ -1111,11 +1152,7 @@
       scheduleScan();
 
       window.addEventListener('resize', () => {
-        const containers = document.querySelectorAll('.weibo-followflow-container');
-        for (const c of containers) {
-          const card = c.closest('article, div[class*="Feed_wrap"]');
-          if (card) alignButtonWithDropdown(card, c);
-        }
+        scheduleScan();
       }, { passive: true });
     };
 
