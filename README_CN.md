@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.1.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.2.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -24,13 +24,13 @@
 1. **已关注博主在流中没有取消关注按钮**：想取关必须点进博主主页，鼠标移到右上角“已关注”浮层，再点击取消关注并确认，打断原本的刷博节奏。
 2. **未关注博主原生关注按钮位置割裂**：原生关注按钮仅在部分流顶部显示，容易误触，且缺乏统一的操作手感。
 
-**Weibo FollowFlow** 延续了 `x-follow-flow` 的设计哲学，专注于以极致克制和原生的方式解决这一痛点：在每条微博卡片的底部操作栏（紧邻“赞”按钮）无缝嵌入原生图标按钮。
+**Weibo FollowFlow** 延续了 `x-follow-flow` 的设计哲学，专注于以极致克制和原生的方式解决这一痛点：在每条微博卡片的**右上角下拉菜单（`∨`）左侧**无缝嵌入原生图标按钮。
 
 ---
 
 ## ✨ 核心特性
 
-- 🎯 **与微博现代 UI 浑然一体**：采用无边框微交互设计，精准安放于微博卡片底部操作条（`转发` · `评论` · `赞` · **`FollowFlow`**）。
+- 🎯 **与微博现代 UI 浑然一体**：采用无边框微交互设计，精准安放于微博卡片右上角下拉菜单（`∨`）左侧，自然优雅。
 - ⚡ **毫秒级网络穿透识别**：
   - 在 `@run-at document-start` 阶段同时拦截 `fetch` 与 `XMLHttpRequest`；
   - 自动解析微博 `/ajax/feed/*`、`/ajax/statuses/*` 的用户关系状态；

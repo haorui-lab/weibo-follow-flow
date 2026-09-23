@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.1.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.2.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-Supported-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-Supported-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -24,13 +24,13 @@ Browsing Weibo's **Hot Feed** or **Home Timeline** is the best way to discover c
 1. **No unfollow button in timeline cards**: To unfollow a creator, you must navigate to their profile page, hover over the "Following" dropdown, click unfollow, and confirm in a modal.
 2. **Inconsistent follow button placement**: Unfollowed creators sometimes have a follow button in the header, sometimes none, with inconsistent UX.
 
-**Weibo FollowFlow** brings the streamlined design of `x-follow-flow` to Weibo: an unobtrusive, borderless native icon button embedded directly in the post's bottom action bar (right next to the Like button).
+**Weibo FollowFlow** brings the streamlined design of `x-follow-flow` to Weibo: an unobtrusive, borderless native icon button embedded directly **to the left of the top-right dropdown menu (`∨`)** on every Weibo card.
 
 ---
 
 ## ✨ Key Features
 
-- 🎯 **Native Design Integration**: Seamlessly embeds into the bottom action bar (`Repost` · `Comment` · `Like` · **`FollowFlow`**).
+- 🎯 **Native Design Integration**: Seamlessly embeds directly to the left of the top-right dropdown menu (`∨`) on card headers.
 - ⚡ **Zero-Latency State Detection**:
   - Full-protocol network interception (`fetch` + `XMLHttpRequest`) at `@run-at document-start`;
   - Inspects Weibo internal AJAX endpoints (`/ajax/feed/*`, `/ajax/statuses/*`) for relationship metadata;

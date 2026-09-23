@@ -2,9 +2,9 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.1.0
-// @description  Add minimalist native-style Follow / Unfollow icon button directly to the action bar on Weibo timelines with 2-step confirmation and instant state sync.
-// @description:zh-CN 在微博信息流操作栏增加无缝原生风格关注/取关 (+ / ✓) 按钮，支持防误触二次确认与多卡同步。
+// @version      0.2.0
+// @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 2-step confirmation and instant state sync.
+// @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (+ / ✓) 按钮，支持防误触二次确认与多卡同步。
 // @author       haorui
 // @homepageURL  https://github.com/haorui-lab/weibo-follow-flow
 // @supportURL   https://github.com/haorui-lab/weibo-follow-flow/issues
@@ -379,9 +379,14 @@
       return fromVue;
     }
 
-    // 2. Check author links in header / head-info / avatar
-    const links = cardElement.querySelectorAll('header a[href*="/u/"], a[class*="name"][href*="/u/"], a[class*="head-info"][href*="/u/"], a[class*="woo-avatar"][href*="/u/"], a[href*="/u/"]');
+    // 2. Check author links in header / head-info / avatar (excluding retweet area)
+    const header = cardElement.querySelector('header, div[class*="Feed_header"]');
+    const searchScope = header || cardElement;
+    const links = searchScope.querySelectorAll('header a[href*="/u/"], a[class*="name"][href*="/u/"], a[class*="head-info"][href*="/u/"], a[class*="woo-avatar"][href*="/u/"], a[href*="/u/"]');
     for (const link of links) {
+      if (link.closest('.wbpro-feed-ogText, [class*="Feed_retweet"], [class*="retweet"]')) {
+        continue;
+      }
       const href = link.getAttribute('href') || '';
       const uid = extractUidFromProfileUrl(href);
       if (uid) {
@@ -503,14 +508,15 @@
     const style = document.createElement('style');
     style.id = 'weibo-followflow-styles';
     style.textContent = `
-      /* Container inside Weibo action bar / footer */
+      /* Container inside Weibo card header (to the left of dropdown arrow) */
       .weibo-followflow-container {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
         user-select: none;
-        margin: 0 4px;
+        margin-right: 6px;
+        vertical-align: middle;
       }
 
       /* Base Icon Button */
@@ -529,13 +535,13 @@
         position: relative;
       }
 
-      /* Circular hover background */
+      /* Circular hover background matching header dropdown icon */
       .weibo-followflow-icon-wrapper {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: 28px;
+        height: 28px;
         border-radius: 9999px;
         background: transparent;
         border: none;
@@ -766,38 +772,76 @@
   }
 
   // ==========================================
-  // 6. Placement (Weibo Action Bar / Footer)
+  // 6. Placement (Top-Right Header, Left of Dropdown Arrow)
   // ==========================================
+  function findHeaderDropdown(cardElement) {
+    // 1. Locate header element of the main card
+    const header = cardElement.querySelector('header, div[class*="Feed_header"]');
+    const scope = header || cardElement;
+
+    // 2. Search for the angle-down icon inside scope
+    const angleIcon = scope.querySelector('i[class*="woo-font--angle-down"], i[class*="angle-down"], svg[class*="angle-down"], [class*="woo-font--angle-down"]');
+    if (angleIcon) {
+      let target = angleIcon;
+      // Climb up to the direct interactive wrapper inside header
+      while (target.parentElement && target.parentElement !== header && target.parentElement !== cardElement) {
+        const p = target.parentElement;
+        if (
+          p.classList.contains('woo-pop-ctrl') ||
+          p.classList.contains('woo-pop-wrap') ||
+          p.getAttribute('role') === 'button' ||
+          p.tagName === 'BUTTON' ||
+          p.classList.contains('woo-box-item-flex')
+        ) {
+          target = p;
+          break;
+        }
+        if (p.parentElement === header || p.parentElement === cardElement) {
+          target = p;
+          break;
+        }
+        target = p;
+      }
+      return { target, container: target.parentElement || scope };
+    }
+
+    // 3. Search for woo-pop-ctrl or more menu container
+    const popCtrl = scope.querySelector('div[class*="woo-pop-ctrl"], div[class*="head_more"], div[class*="head-more"], [action-type="fl_menu"]');
+    if (popCtrl) {
+      return { target: popCtrl, container: popCtrl.parentElement || scope };
+    }
+
+    // 4. Fallback: header's last child
+    if (header && header.lastElementChild) {
+      return { target: header.lastElementChild, container: header };
+    }
+
+    return null;
+  }
+
   function insertFollowIcon(cardElement, buttonContainer) {
-    // 1. Primary target: Card footer / Toolbar
-    const footer = cardElement.querySelector('footer, div[class*="wbpro-feed-footer"], div[class*="Feed_footer"]');
-    if (footer) {
-      // Find Like button (woo-like-main)
-      const likeBtn = footer.querySelector('div[class*="woo-like-main"], div[class*="toolbar_item"]:last-child, [action-type="fl_like"]');
-      if (likeBtn) {
-        let lWrapper = likeBtn;
-        while (lWrapper.parentElement && lWrapper.parentElement !== footer) {
-          lWrapper = lWrapper.parentElement;
-        }
-        if (lWrapper.parentElement === footer) {
-          if (lWrapper.nextSibling) {
-            footer.insertBefore(buttonContainer, lWrapper.nextSibling);
-          } else {
-            footer.appendChild(buttonContainer);
-          }
-          return;
-        }
+    const dropdown = findHeaderDropdown(cardElement);
+    if (dropdown && dropdown.target && dropdown.container) {
+      // Hide native +关注 button in header if present to avoid dual buttons
+      const nativeFollowBtn = dropdown.container.querySelector('button[class*="woo-button"][class*="primary"], div[action-type="follow"]');
+      if (nativeFollowBtn && nativeFollowBtn !== buttonContainer) {
+        nativeFollowBtn.style.display = 'none';
       }
 
-      footer.appendChild(buttonContainer);
+      // Insert directly to the LEFT of the dropdown button!
+      dropdown.container.insertBefore(buttonContainer, dropdown.target);
       return;
     }
 
-    // 2. Fallback: Card header (near user info / more dropdown)
-    const header = cardElement.querySelector('header, div[class*="Feed_header"], div[class*="head-info"]');
+    // Fallback: append to header if found
+    const header = cardElement.querySelector('header, div[class*="Feed_header"]');
     if (header) {
       header.appendChild(buttonContainer);
+      return;
     }
+
+    // Last resort
+    cardElement.insertBefore(buttonContainer, cardElement.firstChild);
   }
 
   async function processCard(cardElement) {
@@ -877,15 +921,34 @@
         return;
       }
 
-      // Query Weibo feed cards
-      const cards = document.querySelectorAll('article, div[class*="Feed_wrap"], div[class*="wbpro-feed-content"], div[action-type="feed_list_item"]');
+      // Query Weibo feed cards (top-level only, never inside retweeted container)
+      const cards = document.querySelectorAll('article, div[class*="Feed_wrap"]');
+      const processed = new Set();
+
       for (const card of cards) {
-        // Find top card element if wbpro-feed-content was selected
-        let targetCard = card;
-        if (card.classList.contains('wbpro-feed-content') && card.closest('article, div[class*="Feed_wrap"]')) {
-          targetCard = card.closest('article, div[class*="Feed_wrap"]');
+        if (card.closest('.wbpro-feed-ogText, [class*="Feed_retweet"], [class*="retweet"]')) {
+          continue;
         }
-        processCard(targetCard);
+        processed.add(card);
+        processCard(card);
+      }
+
+      // If no article / Feed_wrap found, fallback to content containers
+      if (processed.size === 0) {
+        const fallbacks = document.querySelectorAll('div[class*="wbpro-feed-content"], div[action-type="feed_list_item"]');
+        for (const fb of fallbacks) {
+          if (fb.closest('.wbpro-feed-ogText, [class*="Feed_retweet"], [class*="retweet"]')) {
+            continue;
+          }
+          let target = fb;
+          if (fb.classList.contains('wbpro-feed-content') && fb.closest('article, div[class*="Feed_wrap"]')) {
+            target = fb.closest('article, div[class*="Feed_wrap"]');
+          }
+          if (!processed.has(target)) {
+            processed.add(target);
+            processCard(target);
+          }
+        }
       }
     }, CONFIG.scanDebounceMs);
   }
