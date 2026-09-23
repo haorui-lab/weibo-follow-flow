@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.3.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.4.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -46,9 +46,9 @@
 
 | 状态 | 图标符号 | 视觉表现 | 交互行为 |
 | :--- | :---: | :--- | :--- |
-| **未关注** | `+` | 极细中性灰加号，悬浮显示微博经典橙（`#ff8200`）圆圈 | 点击立即 **关注** |
-| **已关注** | `•` | 极简微灰圆点，悬浮变为告警红色 `−` 提示 | 点击启动 **防误触二次确认** |
-| **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微呼吸动画 | 3秒内再次点击 **取关**；超时自动复原 |
+| **未关注** | `+` | 纤细中性灰加号，悬浮高亮微博经典橙（`#ff8200`） | 点击立即 **关注** |
+| **已关注** | `•` | 极简微灰圆点，与微博辅助色一致，悬浮变红 `−` 提示 | 点击启动 **防误触二次确认** |
+| **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微缩放呼吸提示 | 3秒内再次点击 **取关**；超时自动复原 |
 | **处理中** | ⟳ | 原生平滑旋转 Spinner | 禁用连击防并发 |
 
 ---
@@ -114,7 +114,7 @@ const CONFIG = {
 │                              ▼                                  │
 │   ┌──────────────────────────────────────────────────────────┐  │
 │   │     UI Component (卡片右上角下拉框左侧原生图标注入)      │  │
-│   │       [ + (未关注) ] ⇄ [ ✓ (已关注) ] ⇄ [ − (3秒确认) ]  │  │
+│   │       [ + (未关注) ] ⇄ [ • (已关注) ] ⇄ [ − (3秒确认) ]  │  │
 │   └──────────────────────────┬───────────────────────────────┘  │
 │                              │ 用户点击触发                     │
 │                              ▼                                  │
