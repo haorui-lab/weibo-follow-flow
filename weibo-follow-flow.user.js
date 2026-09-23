@@ -2,7 +2,7 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.6.0
+// @version      0.7.0
 // @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 1-click action (optional 2-step) and instant state sync.
 // @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持单次点击直接取关与全流同步。
 // @author       haorui
@@ -477,28 +477,14 @@
   async function executeFollowToggle(cardElement, uid, targetFollowState) {
     const isFollow = targetFollowState === true;
 
-    // Fallback 1: If target is follow and card already has native follow button, click it
-    if (isFollow) {
-      const nativeFollowBtn = cardElement.querySelector('button[class*="woo-button"][class*="primary"], div[action-type="follow"], [class*="head-info"] button');
-      if (nativeFollowBtn && nativeFollowBtn.textContent && nativeFollowBtn.textContent.includes('关注') && !nativeFollowBtn.textContent.includes('已关注')) {
-        nativeFollowBtn.click();
-        await sleep(300);
-        stateManager.set(uid, { following: true });
-        return true;
-      }
-    }
-
+    // 关注与取关均走静默底层 API，彻底规避官方原生的侵入式大弹窗打扰
     const success = isFollow
       ? await executeFollowViaAPI(uid)
       : await executeUnfollowViaAPI(uid);
 
     if (success) {
       stateManager.set(uid, { following: isFollow });
-      if (!isFollow) {
-        showToast('已取消关注');
-      } else {
-        showToast('关注成功');
-      }
+      showToast(isFollow ? '关注成功' : '已取消关注');
       return true;
     }
 
