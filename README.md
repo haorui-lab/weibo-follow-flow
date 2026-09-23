@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.4.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.4.1-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>

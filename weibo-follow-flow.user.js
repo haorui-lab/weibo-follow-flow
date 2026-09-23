@@ -2,7 +2,7 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.4.0
+// @version      0.4.1
 // @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 2-step confirmation and instant state sync.
 // @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持防误触二次确认与多卡同步。
 // @author       haorui
@@ -513,10 +513,16 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        align-self: center !important;
+        height: 24px;
         user-select: none;
         margin-right: 8px;
         line-height: 1;
         cursor: pointer;
+        /* 视觉对齐补偿 (Optical Alignment Compensation):
+           下拉箭头 (∨) 为倒三角形，其人眼感知的视觉重心在图形中上方。
+           向上微调 2px 即可消除几何居中带来的“下沉感”，达到与下拉箭头的完美视觉对齐。 */
+        transform: translateY(-2px);
       }
 
       /* Base Icon Button */
@@ -787,8 +793,10 @@
 
       if (rightFlex && rightFlex.parentElement === header) {
         // Ensure rightFlex centers its children vertically
+        rightFlex.classList.add('woo-box-alignCenter');
         rightFlex.style.display = 'flex';
         rightFlex.style.alignItems = 'center';
+        buttonContainer.style.alignSelf = 'center';
 
         // Find the element inside rightFlex right before which we insert
         let popDirect = popWrap;
