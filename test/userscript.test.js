@@ -235,13 +235,14 @@ export class FollowStateManager {
  * ButtonStateMachine simulates the button state transitions with 2-step confirmation
  */
 export class ButtonStateMachine {
-  constructor({ uid, initialFollowing = false, onAction, onStateChange }) {
+  constructor({ uid, initialFollowing = false, onAction, onStateChange, twoStepUnfollow = false }) {
     this.uid = uid;
     this.state = initialFollowing ? 'FOLLOWING' : 'NOT_FOLLOWING';
     this.onAction = onAction;
     this.onStateChange = onStateChange;
     this.confirmTimer = null;
     this.confirmTimeoutMs = 3000;
+    this.twoStepUnfollow = twoStepUnfollow;
   }
 
   setState(newState) {
@@ -262,13 +263,24 @@ export class ButtonStateMachine {
         setTimeout(() => this.setState('NOT_FOLLOWING'), 1500);
       }
     } else if (this.state === 'FOLLOWING') {
-      this.setState('CONFIRMING_UNFOLLOW');
-      if (this.confirmTimer) clearTimeout(this.confirmTimer);
-      this.confirmTimer = setTimeout(() => {
-        if (this.state === 'CONFIRMING_UNFOLLOW') {
-          this.setState('FOLLOWING');
+      if (this.twoStepUnfollow) {
+        this.setState('CONFIRMING_UNFOLLOW');
+        if (this.confirmTimer) clearTimeout(this.confirmTimer);
+        this.confirmTimer = setTimeout(() => {
+          if (this.state === 'CONFIRMING_UNFOLLOW') {
+            this.setState('FOLLOWING');
+          }
+        }, this.confirmTimeoutMs);
+      } else {
+        this.setState('UNFOLLOWING_IN_PROGRESS');
+        const success = await this.onAction('UNFOLLOW');
+        if (success) {
+          this.setState('NOT_FOLLOWING');
+        } else {
+          this.setState('FAILED');
+          setTimeout(() => this.setState('FOLLOWING'), 1500);
         }
-      }, this.confirmTimeoutMs);
+      }
     } else if (this.state === 'CONFIRMING_UNFOLLOW') {
       if (this.confirmTimer) clearTimeout(this.confirmTimer);
       this.setState('UNFOLLOWING_IN_PROGRESS');
@@ -448,12 +460,40 @@ test('FollowStateManager syncs updates and resolves by UID and screen_name', () 
   unsub();
 });
 
-test('ButtonStateMachine handles 2-step unfollow, timeout rollback, and follow', async () => {
+test('ButtonStateMachine handles direct 1-click unfollow by default', async () => {
   let executedAction = null;
 
   const machine = new ButtonStateMachine({
     uid: '1642634100',
     initialFollowing: true,
+    onAction: async (action) => {
+      executedAction = action;
+      return true;
+    }
+  });
+
+  assert.equal(machine.state, 'FOLLOWING');
+
+  // Click once while FOLLOWING -> directly execute UNFOLLOW
+  await machine.handleClick();
+  assert.equal(executedAction, 'UNFOLLOW');
+  assert.equal(machine.state, 'NOT_FOLLOWING');
+
+  // Click while NOT_FOLLOWING -> execute FOLLOW
+  await machine.handleClick();
+  assert.equal(executedAction, 'FOLLOW');
+  assert.equal(machine.state, 'FOLLOWING');
+
+  machine.destroy();
+});
+
+test('ButtonStateMachine handles optional 2-step unfollow when configured', async () => {
+  let executedAction = null;
+
+  const machine = new ButtonStateMachine({
+    uid: '1642634100',
+    initialFollowing: true,
+    twoStepUnfollow: true,
     onAction: async (action) => {
       executedAction = action;
       return true;
@@ -471,17 +511,6 @@ test('ButtonStateMachine handles 2-step unfollow, timeout rollback, and follow',
   await machine.handleClick();
   assert.equal(executedAction, 'UNFOLLOW');
   assert.equal(machine.state, 'NOT_FOLLOWING');
-
-  // Step 3: Click while NOT_FOLLOWING -> execute FOLLOW
-  await machine.handleClick();
-  assert.equal(executedAction, 'FOLLOW');
-  assert.equal(machine.state, 'FOLLOWING');
-
-  // Step 4: Test timeout rollback
-  await machine.handleClick();
-  assert.equal(machine.state, 'CONFIRMING_UNFOLLOW');
-  await new Promise(r => setTimeout(r, 80));
-  assert.equal(machine.state, 'FOLLOWING');
 
   machine.destroy();
 });

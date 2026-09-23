@@ -2,9 +2,9 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.4.1
-// @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 2-step confirmation and instant state sync.
-// @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持防误触二次确认与多卡同步。
+// @version      0.5.0
+// @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 1-click action (optional 2-step) and instant state sync.
+// @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持单次点击直接取关与全流同步。
 // @author       haorui
 // @homepageURL  https://github.com/haorui-lab/weibo-follow-flow
 // @supportURL   https://github.com/haorui-lab/weibo-follow-flow/issues
@@ -26,6 +26,7 @@
   // Configuration
   // ==========================================
   const CONFIG = {
+    twoStepUnfollow: false,   // 是否启用二次确认取关（默认 false：单次点击直接取关，手感丝滑顺畅）
     confirmTimeoutMs: 3000,
     scanDebounceMs: 50,
     maxActionWaitMs: 800
@@ -664,7 +665,7 @@
 
         wrapper.appendChild(normalSpan);
         wrapper.appendChild(hoverSpan);
-        btn.title = '• 已关注 (点击可取消关注)';
+        btn.title = CONFIG.twoStepUnfollow ? '• 已关注 (点击进入取关确认)' : '• 已关注 (点击取消关注)';
       } else if (currentState === 'CONFIRMING_UNFOLLOW') {
         btn.classList.add('wb-state-confirm');
         wrapper.innerHTML = ICONS.unfollowConfirm;
@@ -705,15 +706,36 @@
         }
         renderUI();
       } else if (currentState === 'FOLLOWING') {
-        currentState = 'CONFIRMING_UNFOLLOW';
-        renderUI();
-        if (confirmTimer) clearTimeout(confirmTimer);
-        confirmTimer = setTimeout(() => {
-          if (currentState === 'CONFIRMING_UNFOLLOW') {
-            currentState = 'FOLLOWING';
+        if (CONFIG.twoStepUnfollow) {
+          currentState = 'CONFIRMING_UNFOLLOW';
+          renderUI();
+          if (confirmTimer) clearTimeout(confirmTimer);
+          confirmTimer = setTimeout(() => {
+            if (currentState === 'CONFIRMING_UNFOLLOW') {
+              currentState = 'FOLLOWING';
+              renderUI();
+            }
+          }, CONFIG.confirmTimeoutMs);
+        } else {
+          // 单次点击直接执行取关 (1-Click Direct Unfollow)
+          currentState = 'LOADING';
+          renderUI();
+          const success = await executeFollowToggle(cardElement, uid, false);
+          if (success) {
+            currentState = 'NOT_FOLLOWING';
+          } else {
+            currentState = 'FAILED';
             renderUI();
+            setTimeout(() => {
+              if (currentState === 'FAILED') {
+                currentState = 'FOLLOWING';
+                renderUI();
+              }
+            }, 1500);
+            return;
           }
-        }, CONFIG.confirmTimeoutMs);
+          renderUI();
+        }
       } else if (currentState === 'CONFIRMING_UNFOLLOW') {
         if (confirmTimer) clearTimeout(confirmTimer);
         currentState = 'LOADING';

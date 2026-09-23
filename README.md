@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.4.1-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.5.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -31,10 +31,9 @@
   - 在 `@run-at document-start` 阶段同时拦截 `fetch` 与 `XMLHttpRequest`；
   - 自动解析微博 `/ajax/feed/*`、`/ajax/statuses/*` 的用户关系状态；
   - 深度遍历微博 Vue 3 组件实例（`__vueParentComponent`）与卡片作者 UID。
-- 🛡️ **防误触两步取关确认**：
-  - 点击已关注博主（`•`）后，微点变为警示红色减号（`−`），启动 3 秒安全倒计时伴随呼吸动效；
-  - 3 秒内未再次点击自动恢复；
-  - 再次点击方才执行取关操作，彻底杜绝误触取关。
+- ⚡ **极速单次点击取关（支持可选防误触）**：
+  - 鼠标悬停已关注微点（`•`）即呈现警示红减号（`−`），点击**单次直接执行取关**，丝滑利落；
+  - 亦支持在配置中一键启用 `twoStepUnfollow: true`，开启 3 秒防误触二次确认呼吸倒计时。
 - 🔄 **全屏多卡片实时联动**：信息流中同一博主若有多条微博，在任一卡片上操作，全屏所有该博主的卡片状态瞬间同步。
 - 👤 **本人与主页微博智能过滤**：自动识别当前登录账号（通过 `window.$CONFIG.uid`，本人微博不显示按钮），并在博主个人主页自动屏蔽按钮（主页自带原生大按钮）。
 - 🚀 **极致性能与虚拟滚动优化**：防抖 MutationObserver 监听，完美支持微博无限滚动，零抖动、零内存泄漏。
@@ -47,8 +46,8 @@
 | 状态 | 图标符号 | 视觉表现 | 交互行为 |
 | :--- | :---: | :--- | :--- |
 | **未关注** | `+` | 纤细中性灰加号，悬浮高亮微博经典橙（`#ff8200`） | 点击立即 **关注** |
-| **已关注** | `•` | 极简微灰圆点，与微博辅助色一致，悬浮变红 `−` 提示 | 点击启动 **防误触二次确认** |
-| **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微缩放呼吸提示 | 3秒内再次点击 **取关**；超时自动复原 |
+| **已关注** | `•` | 极简微灰圆点，与微博辅助色一致，悬浮变红 `−` 提示 | 点击立即 **取关**（默认单次点击，干脆利落） |
+| **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微缩放呼吸提示 | 3秒内再次点击 **取关**（开启 `twoStepUnfollow` 时生效） |
 | **处理中** | ⟳ | 原生平滑旋转 Spinner | 禁用连击防并发 |
 
 ---
@@ -83,11 +82,12 @@
 
 ## ⚙️ 个性化配置
 
-脚本顶部提供了直观的配置对象 `CONFIG`，可自由微调超时与防抖：
+脚本顶部提供了直观的配置对象 `CONFIG`，可自由微调操作方式：
 
 ```javascript
 const CONFIG = {
-  confirmTimeoutMs: 3000,   // 取关二次确认倒计时（毫秒）
+  twoStepUnfollow: false,   // 是否启用二次确认取关（默认 false：单次点击直接取关；true：二次确认防误触）
+  confirmTimeoutMs: 3000,   // 取关二次确认倒计时（毫秒，当 twoStepUnfollow 为 true 时生效）
   scanDebounceMs: 50,       // 时间线滚动防抖扫描间隔（毫秒）
   maxActionWaitMs: 800      // 原生操作等待超时（毫秒）
 };
