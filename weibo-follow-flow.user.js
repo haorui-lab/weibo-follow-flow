@@ -2,9 +2,9 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.2.0
+// @version      0.3.0
 // @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 2-step confirmation and instant state sync.
-// @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (+ / ✓) 按钮，支持防误触二次确认与多卡同步。
+// @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持防误触二次确认与多卡同步。
 // @author       haorui
 // @homepageURL  https://github.com/haorui-lab/weibo-follow-flow
 // @supportURL   https://github.com/haorui-lab/weibo-follow-flow/issues
@@ -108,39 +108,39 @@
     }
   }
 
-  // High-Recognition Crisp SVG Icons (+ / ✓ / −) in Weibo Native Palette
+  // Delicate Micro-UI Icons tailored to Weibo's native aesthetics
   const ICONS = {
-    // Pure, sleek Plus (+) for Follow
+    // Delicate thin Plus (+) for Follow
     follow: `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="8" y1="2.5" x2="8" y2="13.5"></line>
+        <line x1="2.5" y1="8" x2="13.5" y2="8"></line>
       </svg>
     `,
-    // Pure, sleek Checkmark (✓) for Following
+    // Subtle, elegant micro-dot (•) for Following
     following: `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="20 7.5 9 18.5 4 13.5"></polyline>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none">
+        <circle cx="8" cy="8" r="3.2" fill="currentColor"/>
       </svg>
     `,
-    // Pure, sleek Minus (−) for Confirming Unfollow
+    // Delicate Minus (−) for Confirming Unfollow / Hover
     unfollowConfirm: `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="2.5" y1="8" x2="13.5" y2="8"></line>
       </svg>
     `,
-    // Native-like Spinner
+    // Delicate native-like Spinner
     loading: `
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" class="weibo-follow-spinner">
-        <circle cx="12" cy="12" r="9" stroke-opacity="0.25"/>
-        <path d="M12 3a9 9 0 0 1 9 9" stroke-linecap="round"/>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" class="weibo-follow-spinner">
+        <circle cx="8" cy="8" r="6" stroke-opacity="0.25"/>
+        <path d="M8 2a6 6 0 0 1 6 6" stroke-linecap="round"/>
       </svg>
     `,
-    // Error indicator
+    // Delicate Failed cross
     failed: `
-      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <line x1="12" y1="4" x2="4" y2="12"></line>
+        <line x1="4" y1="4" x2="12" y2="12"></line>
       </svg>
     `
   };
@@ -508,15 +508,15 @@
     const style = document.createElement('style');
     style.id = 'weibo-followflow-styles';
     style.textContent = `
-      /* Container inside Weibo card header (to the left of dropdown arrow) */
+      /* Container inside Weibo card header (pixel-perfect aligned with dropdown arrow) */
       .weibo-followflow-container {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
         user-select: none;
-        margin-right: 6px;
-        vertical-align: middle;
+        z-index: 5;
+        width: 18px;
+        height: 18px;
       }
 
       /* Base Icon Button */
@@ -530,18 +530,20 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: #808080;
+        color: #939393;
         transition: color 0.15s ease;
         position: relative;
+        width: 18px;
+        height: 18px;
       }
 
-      /* Circular hover background matching header dropdown icon */
+      /* Circular hover background matching header dropdown icon scale */
       .weibo-followflow-icon-wrapper {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
+        width: 18px;
+        height: 18px;
         border-radius: 9999px;
         background: transparent;
         border: none;
@@ -551,9 +553,9 @@
         display: block;
       }
 
-      /* NOT_FOLLOWING (+): Neutral gray icon, Weibo Orange hover circle */
+      /* NOT_FOLLOWING (+): Delicate gray plus, Weibo orange on hover */
       .weibo-followflow-icon-btn.wb-state-follow {
-        color: #808080;
+        color: #939393;
       }
       .weibo-followflow-icon-btn.wb-state-follow:hover .weibo-followflow-icon-wrapper {
         background-color: rgba(255, 130, 0, 0.12);
@@ -563,9 +565,9 @@
         color: #ff8200;
       }
 
-      /* FOLLOWING (✓): Neutral gray, turns Red on hover when (−) appears */
+      /* FOLLOWING (•): Subtle soft dot, turns into red minus on hover */
       .weibo-followflow-icon-btn.wb-state-following {
-        color: #808080;
+        color: #b0b0b0;
       }
       .weibo-followflow-icon-btn.wb-state-following .wb-icon-normal {
         display: inline-flex;
@@ -593,7 +595,7 @@
         color: #f4212e;
       }
 
-      /* CONFIRMING UNFOLLOW (−): Red warning with pulsing animation */
+      /* CONFIRMING UNFOLLOW (−): Red warning with breathing animation */
       .weibo-followflow-icon-btn.wb-state-confirm {
         color: #f4212e;
       }
@@ -604,7 +606,7 @@
       }
       @keyframes weibo-follow-pulse {
         from { transform: scale(1); }
-        to { transform: scale(1.08); }
+        to { transform: scale(1.18); }
       }
 
       /* LOADING SPINNER */
@@ -669,7 +671,7 @@
 
         wrapper.appendChild(normalSpan);
         wrapper.appendChild(hoverSpan);
-        btn.title = '✓ 已关注 (点击可取消关注)';
+        btn.title = '• 已关注 (点击可取消关注)';
       } else if (currentState === 'CONFIRMING_UNFOLLOW') {
         btn.classList.add('wb-state-confirm');
         wrapper.innerHTML = ICONS.unfollowConfirm;
@@ -772,76 +774,59 @@
   }
 
   // ==========================================
-  // 6. Placement (Top-Right Header, Left of Dropdown Arrow)
+  // 6. Placement (Top-Right Header, Level with Dropdown Arrow)
   // ==========================================
-  function findHeaderDropdown(cardElement) {
-    // 1. Locate header element of the main card
-    const header = cardElement.querySelector('header, div[class*="Feed_header"]');
-    const scope = header || cardElement;
+  function alignButtonWithDropdown(cardElement, buttonContainer) {
+    if (!cardElement || !cardElement.isConnected || !buttonContainer) return false;
 
-    // 2. Search for the angle-down icon inside scope
-    const angleIcon = scope.querySelector('i[class*="woo-font--angle-down"], i[class*="angle-down"], svg[class*="angle-down"], [class*="woo-font--angle-down"]');
-    if (angleIcon) {
-      let target = angleIcon;
-      // Climb up to the direct interactive wrapper inside header
-      while (target.parentElement && target.parentElement !== header && target.parentElement !== cardElement) {
-        const p = target.parentElement;
-        if (
-          p.classList.contains('woo-pop-ctrl') ||
-          p.classList.contains('woo-pop-wrap') ||
-          p.getAttribute('role') === 'button' ||
-          p.tagName === 'BUTTON' ||
-          p.classList.contains('woo-box-item-flex')
-        ) {
-          target = p;
-          break;
-        }
-        if (p.parentElement === header || p.parentElement === cardElement) {
-          target = p;
-          break;
-        }
-        target = p;
-      }
-      return { target, container: target.parentElement || scope };
+    const angleIcon = cardElement.querySelector('i[class*="woo-font--angle-down"], i[class*="angle-down"], svg[class*="angle-down"], [class*="woo-font--angle-down"]');
+    if (!angleIcon) return false;
+
+    // Ensure cardElement has positioning context
+    const cardPos = window.getComputedStyle(cardElement).position;
+    if (!cardPos || cardPos === 'static') {
+      cardElement.style.position = 'relative';
     }
 
-    // 3. Search for woo-pop-ctrl or more menu container
-    const popCtrl = scope.querySelector('div[class*="woo-pop-ctrl"], div[class*="head_more"], div[class*="head-more"], [action-type="fl_menu"]');
-    if (popCtrl) {
-      return { target: popCtrl, container: popCtrl.parentElement || scope };
-    }
+    const cardRect = cardElement.getBoundingClientRect();
+    const iconRect = angleIcon.getBoundingClientRect();
 
-    // 4. Fallback: header's last child
-    if (header && header.lastElementChild) {
-      return { target: header.lastElementChild, container: header };
-    }
+    if (cardRect.width > 0 && iconRect.height > 0) {
+      // Exactly align button center with angleIcon center
+      const iconCenterY = iconRect.top + iconRect.height / 2;
+      const top = Math.round(iconCenterY - cardRect.top - 9); // 18px height / 2 = 9
+      const right = Math.round(cardRect.right - iconRect.left + 10);
 
-    return null;
+      buttonContainer.style.position = 'absolute';
+      buttonContainer.style.top = top + 'px';
+      buttonContainer.style.right = right + 'px';
+      buttonContainer.style.margin = '0';
+      buttonContainer.style.zIndex = '5';
+      return true;
+    }
+    return false;
   }
 
   function insertFollowIcon(cardElement, buttonContainer) {
-    const dropdown = findHeaderDropdown(cardElement);
-    if (dropdown && dropdown.target && dropdown.container) {
-      // Hide native +关注 button in header if present to avoid dual buttons
-      const nativeFollowBtn = dropdown.container.querySelector('button[class*="woo-button"][class*="primary"], div[action-type="follow"]');
-      if (nativeFollowBtn && nativeFollowBtn !== buttonContainer) {
-        nativeFollowBtn.style.display = 'none';
-      }
-
-      // Insert directly to the LEFT of the dropdown button!
-      dropdown.container.insertBefore(buttonContainer, dropdown.target);
-      return;
+    // Hide native +关注 button in header if present to avoid dual buttons
+    const nativeFollowBtn = cardElement.querySelector('button[class*="woo-button"][class*="primary"], div[action-type="follow"], [class*="head-info"] button');
+    if (nativeFollowBtn && nativeFollowBtn !== buttonContainer) {
+      nativeFollowBtn.style.display = 'none';
     }
 
-    // Fallback: append to header if found
-    const header = cardElement.querySelector('header, div[class*="Feed_header"]');
-    if (header) {
-      header.appendChild(buttonContainer);
-      return;
+    cardElement.appendChild(buttonContainer);
+
+    // Initial alignment
+    if (!alignButtonWithDropdown(cardElement, buttonContainer)) {
+      requestAnimationFrame(() => {
+        alignButtonWithDropdown(cardElement, buttonContainer);
+      });
     }
 
-    // Last resort
-    cardElement.insertBefore(buttonContainer, cardElement.firstChild);
+    // Secondary alignment after brief timeout (for late fonts/layout)
+    setTimeout(() => {
+      alignButtonWithDropdown(cardElement, buttonContainer);
+    }, 150);
   }
 
   async function processCard(cardElement) {
@@ -1021,6 +1006,14 @@
       injectStyles();
       initObserver();
       scheduleScan();
+
+      window.addEventListener('resize', () => {
+        const containers = document.querySelectorAll('.weibo-followflow-container');
+        for (const c of containers) {
+          const card = c.closest('article, div[class*="Feed_wrap"]');
+          if (card) alignButtonWithDropdown(card, c);
+        }
+      }, { passive: true });
     };
 
     if (document.readyState === 'loading') {

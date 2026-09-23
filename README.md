@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.2.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.3.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -20,19 +20,19 @@
 1. **已关注博主在流中没有取消关注按钮**：想取关必须点进博主主页，鼠标移到右上角“已关注”浮层，再点击取消关注并确认，打断原本的刷博节奏。
 2. **未关注博主原生关注按钮位置割裂**：原生关注按钮仅在部分流顶部显示，容易误触，且缺乏统一的操作手感。
 
-**Weibo FollowFlow** 延续了 `x-follow-flow` 的设计哲学，专注于以极致克制和原生的方式解决这一痛点：在每条微博卡片的**右上角下拉菜单（`∨`）左侧**无缝嵌入原生图标按钮。
+**Weibo FollowFlow** 延续了 `x-follow-flow` 的设计哲学，专注于以极致克制和原生的方式解决这一痛点：在每条微博卡片的**右上角下拉菜单（`∨`）左侧**无缝对齐嵌入微型原生图标按钮。
 
 ---
 
 ## ✨ 核心特性
 
-- 🎯 **与微博现代 UI 浑然一体**：采用无边框微交互设计，精准安放于微博卡片右上角下拉菜单（`∨`）左侧，自然优雅。
+- 🎯 **与微博现代 UI 浑然一体**：采用无边框微交互设计，严谨与右上角下拉菜单（`∨`）水平居中平齐，克制优雅。
 - ⚡ **毫秒级网络穿透识别**：
   - 在 `@run-at document-start` 阶段同时拦截 `fetch` 与 `XMLHttpRequest`；
   - 自动解析微博 `/ajax/feed/*`、`/ajax/statuses/*` 的用户关系状态；
   - 深度遍历微博 Vue 3 组件实例（`__vueParentComponent`）与卡片作者 UID。
 - 🛡️ **防误触两步取关确认**：
-  - 点击已关注博主（`✓`）后，图标变为警示红色减号（`−`），启动 3 秒安全倒计时伴随呼吸动效；
+  - 点击已关注博主（`•`）后，微点变为警示红色减号（`−`），启动 3 秒安全倒计时伴随呼吸动效；
   - 3 秒内未再次点击自动恢复；
   - 再次点击方才执行取关操作，彻底杜绝误触取关。
 - 🔄 **全屏多卡片实时联动**：信息流中同一博主若有多条微博，在任一卡片上操作，全屏所有该博主的卡片状态瞬间同步。
@@ -46,8 +46,8 @@
 
 | 状态 | 图标符号 | 视觉表现 | 交互行为 |
 | :--- | :---: | :--- | :--- |
-| **未关注** | `+` | 中性灰色加号，悬浮显示微博经典橙（`#ff8200`）圆圈 | 点击立即 **关注** |
-| **已关注** | `✓` | 中性灰色对勾，悬浮变为告警红色 `−` 提示 | 点击启动 **防误触二次确认** |
+| **未关注** | `+` | 极细中性灰加号，悬浮显示微博经典橙（`#ff8200`）圆圈 | 点击立即 **关注** |
+| **已关注** | `•` | 极简微灰圆点，悬浮变为告警红色 `−` 提示 | 点击启动 **防误触二次确认** |
 | **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微呼吸动画 | 3秒内再次点击 **取关**；超时自动复原 |
 | **处理中** | ⟳ | 原生平滑旋转 Spinner | 禁用连击防并发 |
 
