@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.5.0-orange.svg?style=flat-square" alt="Version"></a>
+  <a href="https://github.com/haorui-lab/weibo-follow-flow/releases"><img src="https://img.shields.io/badge/version-0.6.0-orange.svg?style=flat-square" alt="Version"></a>
   <a href="./package.json"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License"></a>
   <a href="https://www.tampermonkey.net/"><img src="https://img.shields.io/badge/Tampermonkey-支持-black?style=flat-square&logo=tampermonkey" alt="Tampermonkey"></a>
   <a href="https://violentmonkey.github.io/"><img src="https://img.shields.io/badge/Violentmonkey-支持-orange?style=flat-square" alt="Violentmonkey"></a>
@@ -34,6 +34,8 @@
 - ⚡ **极速单次点击取关（支持可选防误触）**：
   - 鼠标悬停已关注微点（`•`）即呈现警示红减号（`−`），点击**单次直接执行取关**，丝滑利落；
   - 亦支持在配置中一键启用 `twoStepUnfollow: true`，开启 3 秒防误触二次确认呼吸倒计时。
+- 💬 **轻量无感反馈气泡（Toast）**：
+  - 取关成功后，顶部自动呈现与微博现代风格一致的半透明毛玻璃“已取消关注”提示气泡，反馈明确且绝不阻挡操作。
 - 🔄 **全屏多卡片实时联动**：信息流中同一博主若有多条微博，在任一卡片上操作，全屏所有该博主的卡片状态瞬间同步。
 - 👤 **本人与主页微博智能过滤**：自动识别当前登录账号（通过 `window.$CONFIG.uid`，本人微博不显示按钮），并在博主个人主页自动屏蔽按钮（主页自带原生大按钮）。
 - 🚀 **极致性能与虚拟滚动优化**：防抖 MutationObserver 监听，完美支持微博无限滚动，零抖动、零内存泄漏。
@@ -46,7 +48,7 @@
 | 状态 | 图标符号 | 视觉表现 | 交互行为 |
 | :--- | :---: | :--- | :--- |
 | **未关注** | `+` | 纤细中性灰加号，悬浮高亮微博经典橙（`#ff8200`） | 点击立即 **关注** |
-| **已关注** | `•` | 极简微灰圆点，与微博辅助色一致，悬浮变红 `−` 提示 | 点击立即 **取关**（默认单次点击，干脆利落） |
+| **已关注** | `•` | 极简微灰圆点，与微博辅助色一致，悬浮变红 `−` 提示 | 点击立即 **取关**（触发轻量“已取消关注”气泡） |
 | **确认中** | `−` | 告警红色（`#f4212e`）减号，伴随微缩放呼吸提示 | 3秒内再次点击 **取关**（开启 `twoStepUnfollow` 时生效） |
 | **处理中** | ⟳ | 原生平滑旋转 Spinner | 禁用连击防并发 |
 

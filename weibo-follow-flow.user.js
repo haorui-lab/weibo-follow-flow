@@ -2,7 +2,7 @@
 // @name         Weibo FollowFlow
 // @name:zh-CN   Weibo FollowFlow - 微博信息流关注/取关助手
 // @namespace    https://github.com/haorui-lab/weibo-follow-flow
-// @version      0.5.0
+// @version      0.6.0
 // @description  Add minimalist native-style Follow / Unfollow icon button directly to the left of the top-right dropdown menu on Weibo cards with 1-click action (optional 2-step) and instant state sync.
 // @description:zh-CN 在微博卡片右上角下拉菜单左侧增加无缝原生风格关注/取关 (微点/加号) 按钮，支持单次点击直接取关与全流同步。
 // @author       haorui
@@ -494,6 +494,11 @@
 
     if (success) {
       stateManager.set(uid, { following: isFollow });
+      if (!isFollow) {
+        showToast('已取消关注');
+      } else {
+        showToast('关注成功');
+      }
       return true;
     }
 
@@ -624,8 +629,95 @@
       .weibo-followflow-icon-btn.wb-state-failed {
         color: #f4212e;
       }
+
+      /* Floating Toast Notification matching Weibo dark frosted glass style */
+      .weibo-followflow-toast {
+        position: fixed;
+        top: 76px;
+        left: 50%;
+        transform: translate(-50%, -10px);
+        background: rgba(30, 30, 30, 0.9);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        color: #ffffff;
+        font-size: 13.5px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-weight: 500;
+        line-height: 1.4;
+        padding: 7px 18px;
+        border-radius: 9999px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        z-index: 999999;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        user-select: none;
+      }
+      .weibo-followflow-toast.wb-toast-show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .weibo-followflow-toast .wb-toast-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #00ba7c;
+      }
+      .weibo-followflow-toast .wb-toast-text {
+        white-space: nowrap;
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
+  }
+
+  let activeToast = null;
+  let activeToastTimer = null;
+
+  function showToast(text, duration = 2000) {
+    if (typeof document === 'undefined') return;
+
+    if (activeToast) {
+      clearTimeout(activeToastTimer);
+      if (activeToast.parentElement) {
+        activeToast.parentElement.removeChild(activeToast);
+      }
+      activeToast = null;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'weibo-followflow-toast';
+    toast.setAttribute('role', 'alert');
+    toast.innerHTML = `
+      <span class="wb-toast-icon">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3.5 8.5 6.5 11.5 12.5 5"></polyline>
+        </svg>
+      </span>
+      <span class="wb-toast-text">${text}</span>
+    `;
+
+    (document.body || document.documentElement).appendChild(toast);
+    activeToast = toast;
+
+    requestAnimationFrame(() => {
+      toast.classList.add('wb-toast-show');
+    });
+
+    activeToastTimer = setTimeout(() => {
+      toast.classList.remove('wb-toast-show');
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.parentElement.removeChild(toast);
+        }
+        if (activeToast === toast) {
+          activeToast = null;
+        }
+      }, 250);
+    }, duration);
   }
 
   function createFollowIconButton(cardElement, uid, initialFollowing) {
